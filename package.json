@@ -3,13 +3,14 @@
 	"version": "1.0.0",
 	"description": "",
 	"main": "src/index.js",
+	"type": "module",
 	"scripts": {
 		"app:test": "echo \"Error: no test specified\" && exit 1",
 		"app:init": "npx prisma init",
 		"start:dev": "nodemon src/index.js",
 		"migration:create": "npx prisma migrate dev --name",
 		"migration:push": "npx prisma migrate dev",
-		"db:seed": "node prisma/seeder"
+		"db:seed": "node prisma/seeder/index.js"
 	},
 	"author": "",
 	"license": "ISC",
