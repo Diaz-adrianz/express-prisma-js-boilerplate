@@ -1,13 +1,14 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import { router } from './router/index.js';
+import Setting from './config/setting.config.js';
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = Setting.port;
 
 app.use(cookieParser());
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 
 app.use('/api', router);
 app.use('*', (req, res) => {
