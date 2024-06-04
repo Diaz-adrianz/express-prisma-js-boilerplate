@@ -1,0 +1,6 @@
+build
+coverege
+dist
+package-lock.json
+node_modules
+.github

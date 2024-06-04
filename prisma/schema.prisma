@@ -3,16 +3,772 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  createdBy String?
-  updatedBy String?
+model ref_academic_years {
+  id         Int      @id @default(autoincrement())
+  start      String?  @db.VarChar(255)
+  end        String?  @db.VarChar(255)
+  name       String?  @db.VarChar(255)
+  status     String?  @db.VarChar(255)
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+}
+
+model ref_book_categories {
+  id        Int         @id @default(autoincrement())
+  code      String?     @db.VarChar(255)
+  category  String?     @db.VarChar(255)
+  tbl_books tbl_books[]
+}
+
+model ref_classes {
+  id                       Int                        @id @default(autoincrement())
+  level                    String                     @db.VarChar(255)
+  class_name               String                     @db.VarChar(255)
+  book_target              Int?
+  waste_target             Float?
+  created_at               DateTime                   @db.DateTime(0)
+  updated_at               DateTime                   @db.DateTime(0)
+  ref_narrative_categories ref_narrative_categories[]
+  ref_timetable_temp       ref_timetable_temp[]
+  tbl_class_timetable      tbl_class_timetable[]
+  tbl_form_teacher         tbl_form_teacher[]
+}
+
+model ref_financial_posts {
+  id         Int      @id @default(autoincrement())
+  name       String?  @db.VarChar(255)
+  in_out     String?  @db.VarChar(255)
+  desc       String?  @db.VarChar(255)
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+}
+
+model ref_months {
+  id     Int     @id @default(autoincrement())
+  name   String? @db.VarChar(255)
+  status String? @db.VarChar(255)
+}
+
+model ref_narrative_categories {
+  id                           Int                            @id @default(autoincrement())
+  code                         String?                        @db.VarChar(255)
+  class_id                     Int?
+  category                     String?                        @db.VarChar(255)
+  ref_classes                  ref_classes?                   @relation(fields: [class_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "ref_narrative_categories_ibfk_1")
+  ref_narrative_sub_categories ref_narrative_sub_categories[]
+
+  @@index([class_id], map: "class_id")
+}
+
+model ref_narrative_desc {
+  id                           Int                           @id @default(autoincrement())
+  narrative_sub_cat_id         Int?
+  desc                         String?                       @db.VarChar(255)
+  ref_narrative_sub_categories ref_narrative_sub_categories? @relation(fields: [narrative_sub_cat_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "ref_narrative_desc_ibfk_1")
+
+  @@index([narrative_sub_cat_id], map: "narrative_sub_cat_id")
+}
+
+model ref_narrative_sub_categories {
+  id                       Int                       @id @default(autoincrement())
+  narrative_cat_id         Int?
+  code                     String?                   @db.VarChar(255)
+  sub_category             String?                   @db.VarChar(255)
+  ref_narrative_desc       ref_narrative_desc[]
+  ref_narrative_categories ref_narrative_categories? @relation(fields: [narrative_cat_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "ref_narrative_sub_categories_ibfk_1")
+
+  @@index([narrative_cat_id], map: "narrative_cat_id")
+}
+
+model ref_payment_category {
+  id               Int               @id @default(autoincrement())
+  payment_post_id  Int?
+  academic_year    String?           @db.VarChar(255)
+  payment_type     String?           @db.VarChar(255)
+  billing_cycle    String?           @db.VarChar(255)
+  level            String?           @db.VarChar(255)
+  created_at       DateTime          @db.DateTime(0)
+  updated_at       DateTime          @db.DateTime(0)
+  ref_payment_post ref_payment_post? @relation(fields: [payment_post_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "ref_payment_category_ibfk_1")
+
+  @@index([payment_post_id], map: "payment_post_id")
+}
+
+model ref_payment_post {
+  id                   Int                    @id @default(autoincrement())
+  name                 String?                @db.VarChar(255)
+  desc                 String?                @db.VarChar(255)
+  ref_payment_category ref_payment_category[]
+}
+
+model ref_personality {
+  id   Int     @id @default(autoincrement())
+  desc String? @db.VarChar(255)
+}
+
+model ref_religions {
+  id         Int      @id @default(autoincrement())
+  code       String?  @db.VarChar(255)
+  name       String?  @db.VarChar(255)
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+}
+
+model ref_roles {
+  id           Int     @id @default(autoincrement())
+  code         String? @db.VarChar(255)
+  name         String  @db.VarChar(255)
+  access_right String? @db.VarChar(255)
+}
+
+model ref_subjects {
+  id                  Int                   @id @default(autoincrement())
+  level               String?               @db.VarChar(255)
+  code                String?               @db.VarChar(255)
+  name                String?               @db.VarChar(255)
+  threshold           Float?
+  ref_timetable_temp  ref_timetable_temp[]
+  tbl_class_timetable tbl_class_timetable[]
+}
+
+model ref_task_categories {
+  id   Int     @id @default(autoincrement())
+  desc String? @db.VarChar(255)
+}
+
+model ref_templates {
+  id         Int      @id @default(autoincrement())
+  code       String?  @db.VarChar(255)
+  file_path  String?  @db.VarChar(255)
+  desc       String?  @db.VarChar(255)
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+}
+
+model ref_timetable_temp {
+  id           Int           @id @default(autoincrement())
+  class_id     Int?
+  day_id       Int?
+  subject_id   Int?
+  semester     Int?
+  time_seq     Int?
+  created_at   DateTime      @db.DateTime(0)
+  updated_at   DateTime      @db.DateTime(0)
+  ref_classes  ref_classes?  @relation(fields: [class_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "ref_timetable_temp_ibfk_1")
+  ref_weekday  ref_weekday?  @relation(fields: [day_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "ref_timetable_temp_ibfk_2")
+  ref_subjects ref_subjects? @relation(fields: [subject_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "ref_timetable_temp_ibfk_3")
+
+  @@index([class_id], map: "class_id")
+  @@index([day_id], map: "day_id")
+  @@index([subject_id], map: "subject_id")
+}
+
+model ref_users {
+  id              Int       @default(autoincrement())
+  uuid            String    @db.Char(36)
+  role_id         Int
+  full_name       String?   @db.VarChar(255)
+  email           String?   @db.VarChar(255)
+  password        String?   @db.VarChar(255)
+  status          Int?
+  email_verified  Int?
+  address         String?   @db.VarChar(255)
+  phone_number    String?   @db.VarChar(255)
+  avatar          String?   @db.VarChar(255)
+  reset_token     String?   @db.VarChar(255)
+  reset_token_exp DateTime? @db.DateTime(0)
+  created_at      DateTime  @db.DateTime(0)
+  updated_at      DateTime  @db.DateTime(0)
+
+  @@id([id, uuid])
+}
+
+model ref_wastetypes {
+  id   Int     @id @default(autoincrement())
+  code String? @db.VarChar(255)
+  name String? @db.VarChar(255)
+}
+
+model ref_weekday {
+  id                  Int                   @id @default(autoincrement())
+  name                String?               @db.VarChar(255)
+  ref_timetable_temp  ref_timetable_temp[]
+  tbl_class_timetable tbl_class_timetable[]
+}
+
+model sequelizemeta {
+  name String @id @unique(map: "name") @db.VarChar(255)
+}
+
+model tbl_achievements {
+  id               Int           @id @default(autoincrement())
+  student_id       Int?
+  achievement_desc String?       @db.VarChar(255)
+  issued_at        DateTime?     @db.DateTime(0)
+  certificate_path String?       @db.VarChar(255)
+  created_at       DateTime      @db.DateTime(0)
+  updated_at       DateTime      @db.DateTime(0)
+  tbl_students     tbl_students? @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tbl_achievements_ibfk_1")
+
+  @@index([student_id], map: "student_id")
+}
+
+model tbl_announcements {
+  id                Int       @id @default(autoincrement())
+  date_start        DateTime? @db.DateTime(0)
+  date_end          DateTime? @db.DateTime(0)
+  announcement_desc String?   @db.Text
+  created_at        DateTime  @db.DateTime(0)
+  updated_at        DateTime  @db.DateTime(0)
+}
+
+model tbl_book_reviews {
+  id           Int           @id @default(autoincrement())
+  book_id      Int?
+  student_id   Int?
+  rating       Float?
+  comment      String?       @db.Text
+  created_at   DateTime      @db.DateTime(0)
+  updated_at   DateTime      @db.DateTime(0)
+  tbl_books    tbl_books?    @relation(fields: [book_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tbl_book_reviews_ibfk_1")
+  tbl_students tbl_students? @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tbl_book_reviews_ibfk_2")
+
+  @@index([book_id], map: "book_id")
+  @@index([student_id], map: "student_id")
+}
+
+model tbl_book_sliders {
+  id         Int      @id @default(autoincrement())
+  path       String?  @db.VarChar(255)
+  title      String?  @db.VarChar(255)
+  writer     String?  @db.VarChar(255)
+  publisher  String?  @db.VarChar(255)
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+}
+
+model tbl_books {
+  id                  Int                  @id @default(autoincrement())
+  book_cat_id         Int?
+  title               String?              @db.VarChar(255)
+  publisher           String?              @db.VarChar(255)
+  writer              String?              @db.VarChar(255)
+  qty                 Int?
+  category            String?              @db.VarChar(255)
+  cover               String?              @db.VarChar(255)
+  created_at          DateTime             @db.DateTime(0)
+  updated_at          DateTime             @db.DateTime(0)
+  tbl_book_reviews    tbl_book_reviews[]
+  ref_book_categories ref_book_categories? @relation(fields: [book_cat_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tbl_books_ibfk_1")
+  tbl_borrow_books    tbl_borrow_books[]
+
+  @@index([book_cat_id], map: "book_cat_id")
+}
+
+model tbl_borrow_books {
+  id           Int           @id @default(autoincrement())
+  student_id   Int?
+  book_id      Int?
+  start_date   DateTime?     @db.DateTime(0)
+  end_date     DateTime?     @db.DateTime(0)
+  created_at   DateTime      @db.DateTime(0)
+  updated_at   DateTime      @db.DateTime(0)
+  tbl_students tbl_students? @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tbl_borrow_books_ibfk_1")
+  tbl_books    tbl_books?    @relation(fields: [book_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tbl_borrow_books_ibfk_2")
+
+  @@index([book_id], map: "book_id")
+  @@index([student_id], map: "student_id")
+}
+
+model tbl_class_timetable {
+  id           Int           @id @default(autoincrement())
+  class_id     Int?
+  day_id       Int?
+  subject_id   Int?
+  semester     Int?
+  time_seq     Int?
+  date_at      DateTime?     @db.DateTime(0)
+  created_at   DateTime      @db.DateTime(0)
+  updated_at   DateTime      @db.DateTime(0)
+  ref_classes  ref_classes?  @relation(fields: [class_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tbl_class_timetable_ibfk_1")
+  ref_weekday  ref_weekday?  @relation(fields: [day_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tbl_class_timetable_ibfk_2")
+  ref_subjects ref_subjects? @relation(fields: [subject_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tbl_class_timetable_ibfk_3")
+
+  @@index([class_id], map: "class_id")
+  @@index([day_id], map: "day_id")
+  @@index([subject_id], map: "subject_id")
+}
+
+model tbl_edu_calendar_details {
+  id                Int                @id @default(autoincrement())
+  edu_id            Int?
+  start_date        DateTime?          @db.DateTime(0)
+  end_date          DateTime?          @db.DateTime(0)
+  agenda            String?            @db.VarChar(255)
+  color             String?            @db.VarChar(255)
+  created_at        DateTime           @db.DateTime(0)
+  updated_at        DateTime           @db.DateTime(0)
+  tbl_edu_calendars tbl_edu_calendars? @relation(fields: [edu_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tbl_edu_calendar_details_ibfk_1")
+
+  @@index([edu_id], map: "edu_id")
+}
+
+model tbl_edu_calendars {
+  id                       Int                        @id @default(autoincrement())
+  academic_year            String?                    @db.VarChar(255)
+  level                    String?                    @db.VarChar(255)
+  semester                 Int?
+  created_at               DateTime                   @db.DateTime(0)
+  updated_at               DateTime                   @db.DateTime(0)
+  tbl_edu_calendar_details tbl_edu_calendar_details[]
+}
+
+model tbl_employees {
+  id               Int                @id @default(autoincrement())
+  employee_no      String?            @db.VarChar(255)
+  full_name        String?            @db.VarChar(255)
+  gender           String?            @db.VarChar(255)
+  pob              String?            @db.VarChar(255)
+  dob              DateTime?          @db.DateTime(0)
+  religion         String?            @db.VarChar(255)
+  marital_status   String?            @db.VarChar(255)
+  last_education   String?            @db.VarChar(255)
+  certificate_year String?            @db.VarChar(255)
+  is_education     String?            @db.VarChar(255)
+  major            String?            @db.VarChar(255)
+  employee_status  String?            @db.VarChar(255)
+  work_start_date  String?            @db.VarChar(255)
+  occupation       String?            @db.VarChar(255)
+  is_teacher       String?            @db.VarChar(255)
+  duty             String?            @db.VarChar(255)
+  job_desc         String?            @db.VarChar(255)
+  grade            String?            @db.VarChar(255)
+  created_at       DateTime           @db.DateTime(0)
+  updated_at       DateTime           @db.DateTime(0)
+  tbl_form_teacher tbl_form_teacher[]
+}
+
+model tbl_for_country {
+  id            Int      @id @default(autoincrement())
+  user_id       Int?
+  academic_year String?  @db.VarChar(255)
+  target        Float?
+  created_at    DateTime @db.DateTime(0)
+  updated_at    DateTime @db.DateTime(0)
+
+  @@index([user_id], map: "user_id")
+}
+
+model tbl_for_country_details {
+  id               Int      @id @default(autoincrement())
+  for_country_id   Int?
+  activity         String?  @db.VarChar(255)
+  duration         Float?
+  remark           String?  @db.VarChar(255)
+  certificate_path String?  @db.VarChar(255)
+  created_at       DateTime @db.DateTime(0)
+  updated_at       DateTime @db.DateTime(0)
+
+  @@index([for_country_id], map: "for_country_id")
+}
+
+model tbl_form_teacher {
+  id            Int            @id @default(autoincrement())
+  class_id      Int?
+  employee_id   Int?
+  academic_year String?        @db.VarChar(255)
+  status        String?        @db.VarChar(255)
+  created_at    DateTime       @db.DateTime(0)
+  updated_at    DateTime       @db.DateTime(0)
+  ref_classes   ref_classes?   @relation(fields: [class_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tbl_form_teacher_ibfk_1")
+  tbl_employees tbl_employees? @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tbl_form_teacher_ibfk_2")
+
+  @@index([class_id], map: "class_id")
+  @@index([employee_id], map: "employee_id")
+}
+
+model tbl_messages {
+  id         Int      @id @default(autoincrement())
+  unique_id  String   @db.Char(36)
+  sender_id  Int?
+  message    String?  @db.Text
+  is_read    Boolean?
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+}
+
+model tbl_monthly {
+  id                  Int       @id @default(autoincrement())
+  student_class_id    Int?
+  month_id            Int?
+  payment_category_id Int?
+  academic_year       String?   @db.VarChar(255)
+  bill_amount         Float?
+  payment_status      String?   @db.VarChar(255)
+  payment_date        DateTime? @db.DateTime(0)
+  payment_response    String?   @db.Text
+  invoice             String?   @db.VarChar(255)
+  created_at          DateTime  @db.DateTime(0)
+  updated_at          DateTime  @db.DateTime(0)
+
+  @@index([month_id], map: "month_id")
+  @@index([payment_category_id], map: "payment_category_id")
+  @@index([student_class_id], map: "student_class_id")
+}
+
+model tbl_narrative_comments {
+  id                Int      @id @default(autoincrement())
+  student_report_id Int?
+  narrative_cat_id  Int?
+  comments          String?  @db.Text
+  created_at        DateTime @db.DateTime(0)
+  updated_at        DateTime @db.DateTime(0)
+
+  @@index([narrative_cat_id], map: "narrative_cat_id")
+  @@index([student_report_id], map: "student_report_id")
+}
+
+model tbl_narrative_reports {
+  id                Int      @id @default(autoincrement())
+  student_report_id Int?
+  narrative_desc_id Int?
+  grade             Int?
+  created_at        DateTime @db.DateTime(0)
+  updated_at        DateTime @db.DateTime(0)
+
+  @@index([narrative_desc_id], map: "narrative_desc_id")
+  @@index([student_report_id], map: "student_report_id")
+}
+
+model tbl_non_monthly {
+  id                  Int       @id @default(autoincrement())
+  student_class_id    Int?
+  payment_category_id Int?
+  academic_year       String?   @db.VarChar(255)
+  bill_amount         Float?
+  payment_status      String?   @db.VarChar(255)
+  payment_date        DateTime? @db.DateTime(0)
+  payment_response    String?   @db.Text
+  invoice             String?   @db.VarChar(255)
+  created_at          DateTime  @db.DateTime(0)
+  updated_at          DateTime  @db.DateTime(0)
+
+  @@index([payment_category_id], map: "payment_category_id")
+  @@index([student_class_id], map: "student_class_id")
+}
+
+model tbl_notifications {
+  id         Int       @id @default(autoincrement())
+  user_id    Int?
+  title      String?   @db.VarChar(255)
+  desc       String?   @db.VarChar(255)
+  is_read    Boolean?
+  read_at    DateTime? @db.DateTime(0)
+  created_at DateTime  @db.DateTime(0)
+  updated_at DateTime  @db.DateTime(0)
+
+  @@index([user_id], map: "user_id")
+}
+
+model tbl_number_reports {
+  id                Int      @id @default(autoincrement())
+  student_report_id Int?
+  subject_id        Int?
+  grade             Float?
+  grade_text        String?  @db.VarChar(255)
+  created_at        DateTime @db.DateTime(0)
+  updated_at        DateTime @db.DateTime(0)
+
+  @@index([student_report_id], map: "student_report_id")
+  @@index([subject_id], map: "subject_id")
+}
+
+model tbl_overviews {
+  id                       Int      @id @default(autoincrement())
+  topic                    String?  @db.VarChar(255)
+  meaningful_understanding String?  @db.VarChar(255)
+  period                   String?  @db.VarChar(255)
+  tup                      String?  @db.Text
+  status                   String?  @db.VarChar(255)
+  created_at               DateTime @db.DateTime(0)
+  updated_at               DateTime @db.DateTime(0)
+}
+
+model tbl_parents {
+  id                      Int      @id @default(autoincrement())
+  student_id              Int?
+  parent_type             String?  @db.VarChar(255)
+  name                    String?  @db.VarChar(255)
+  nationality             String?  @db.VarChar(255)
+  religion                String?  @db.VarChar(255)
+  marriage_to             Int?
+  in_age                  Int?
+  relationship_to_student String?  @db.VarChar(255)
+  address                 String?  @db.VarChar(255)
+  phone                   String?  @db.VarChar(255)
+  email                   String?  @db.VarChar(255)
+  com_priority            String?  @db.VarChar(255)
+  last_education          String?  @db.VarChar(255)
+  salary                  Float?
+  field_of_work           String?  @db.VarChar(255)
+  created_at              DateTime @db.DateTime(0)
+  updated_at              DateTime @db.DateTime(0)
+}
+
+model tbl_portofolio_reports {
+  id                Int      @id @default(autoincrement())
+  student_report_id Int?
+  type              String?  @db.VarChar(255)
+  file_path         String?  @db.VarChar(255)
+  created_at        DateTime @db.DateTime(0)
+  updated_at        DateTime @db.DateTime(0)
+
+  @@index([student_report_id], map: "student_report_id")
+}
+
+model tbl_report_signers {
+  id            Int       @id @default(autoincrement())
+  class_id      Int?
+  academic_year String?   @db.VarChar(255)
+  semester      Int?
+  head          String?   @db.VarChar(255)
+  form_teacher  String?   @db.VarChar(255)
+  facilitator   String?   @db.VarChar(255)
+  sign_at       DateTime? @db.DateTime(0)
+  created_at    DateTime  @db.DateTime(0)
+  updated_at    DateTime  @db.DateTime(0)
+
+  @@index([class_id], map: "class_id")
+}
+
+model tbl_student_personality {
+  id               Int      @id @default(autoincrement())
+  student_class_id Int?
+  personality_id   Int?
+  grade            String?  @db.VarChar(255)
+  created_at       DateTime @db.DateTime(0)
+  updated_at       DateTime @db.DateTime(0)
+
+  @@index([personality_id], map: "personality_id")
+  @@index([student_class_id], map: "student_class_id")
+}
+
+model tbl_student_reports {
+  id                   Int      @id @default(autoincrement())
+  student_class_id     Int?
+  semester             Int?
+  number_path          String?  @db.VarChar(255)
+  narrative_path       String?  @db.VarChar(255)
+  portofolio_path      String?  @db.VarChar(255)
+  merged_path          String?  @db.VarChar(255)
+  nar_teacher_comments String?  @db.Text
+  nar_parent_comments  String?  @db.Text
+  por_teacher_comments String?  @db.Text
+  por_parent_comments  String?  @db.Text
+  nar_comments_path    String?  @db.VarChar(255)
+  por_comments_path    String?  @db.VarChar(255)
+  created_at           DateTime @db.DateTime(0)
+  updated_at           DateTime @db.DateTime(0)
+
+  @@index([student_class_id], map: "student_class_id")
+}
+
+model tbl_student_task {
+  id               Int       @id @default(autoincrement())
+  student_class_id Int?
+  task_category_id Int?
+  semester         Int?
+  subject_id       Int?
+  topic            String?   @db.VarChar(255)
+  characteristic   String?   @db.VarChar(255)
+  start_date       DateTime? @db.DateTime(0)
+  end_date         DateTime? @db.DateTime(0)
+  status           String?   @db.VarChar(255)
+  assign_value     Float?
+  feed_fwd         String?   @db.VarChar(255)
+  up_file          String?   @db.VarChar(255)
+  down_file        String?   @db.VarChar(255)
+  created_at       DateTime  @db.DateTime(0)
+  updated_at       DateTime  @db.DateTime(0)
+
+  @@index([student_class_id], map: "student_class_id")
+  @@index([subject_id], map: "subject_id")
+  @@index([task_category_id], map: "task_category_id")
+}
+
+model tbl_students {
+  id               Int                @id @default(autoincrement())
+  nis              String?            @db.VarChar(255)
+  nisn             String?            @db.VarChar(255)
+  full_name        String?            @db.VarChar(255)
+  nickname         String?            @db.VarChar(255)
+  gender           String?            @db.VarChar(255)
+  pob              String?            @db.VarChar(255)
+  dob              DateTime?          @db.DateTime(0)
+  nationality      String?            @db.VarChar(255)
+  religion         String?            @db.VarChar(255)
+  address          String?            @db.VarChar(255)
+  level            String?            @db.VarChar(255)
+  class            String?            @db.VarChar(255)
+  is_active        String?            @db.VarChar(255)
+  is_transfer      String?            @default("Tidak") @db.VarChar(255)
+  category         String?            @db.VarChar(255)
+  created_at       DateTime           @db.DateTime(0)
+  updated_at       DateTime           @db.DateTime(0)
+  tbl_achievements tbl_achievements[]
+  tbl_book_reviews tbl_book_reviews[]
+  tbl_borrow_books tbl_borrow_books[]
+}
+
+model tbl_students_attendance {
+  id               Int       @id @default(autoincrement())
+  student_class_id Int?
+  semester         Int?
+  att_date         DateTime? @db.DateTime(0)
+  att_time         DateTime? @db.Time(0)
+  status           String?   @db.VarChar(255)
+  remark           String?   @db.VarChar(255)
+  created_at       DateTime  @db.DateTime(0)
+  updated_at       DateTime  @db.DateTime(0)
+
+  @@index([student_class_id], map: "student_class_id")
+}
+
+model tbl_students_in_class {
+  id            Int      @id @default(autoincrement())
+  academic_year String?  @db.VarChar(255)
+  student_id    Int?
+  class_id      Int?
+  is_active     String?  @db.VarChar(255)
+  created_at    DateTime @db.DateTime(0)
+  updated_at    DateTime @db.DateTime(0)
+
+  @@index([class_id], map: "class_id")
+  @@index([student_id], map: "student_id")
+}
+
+model tbl_task_details {
+  id         Int       @id @default(autoincrement())
+  task_id    Int?
+  student_id Int?
+  work_date  DateTime? @db.DateTime(0)
+  task_file  String?   @db.VarChar(255)
+  feedback   String?   @db.VarChar(255)
+  created_at DateTime  @db.DateTime(0)
+  updated_at DateTime  @db.DateTime(0)
+}
+
+model tbl_tasks {
+  id               Int       @id @default(autoincrement())
+  class_id         Int?
+  subject_id       Int?
+  task_category_id Int?
+  topic            String?   @db.VarChar(255)
+  start_date       DateTime? @db.DateTime(0)
+  end_date         DateTime? @db.DateTime(0)
+  category         String?   @db.VarChar(255)
+  status           String?   @db.VarChar(255)
+  task_file        String?   @db.VarChar(255)
+  created_at       DateTime  @db.DateTime(0)
+  updated_at       DateTime  @db.DateTime(0)
+
+  @@index([class_id], map: "class_id")
+  @@index([subject_id], map: "subject_id")
+  @@index([task_category_id], map: "task_category_id")
+}
+
+model tbl_timetable {
+  id            Int       @id @default(autoincrement())
+  academic_year String?   @db.VarChar(255)
+  class_id      Int?
+  semester      Int?
+  title         String?   @db.VarChar(255)
+  start_date    DateTime? @db.DateTime(0)
+  end_date      DateTime? @db.DateTime(0)
+  hide_student  Boolean?
+  created_at    DateTime  @db.DateTime(0)
+  updated_at    DateTime  @db.DateTime(0)
+
+  @@index([class_id], map: "class_id")
+}
+
+model tbl_timetable_details {
+  id           Int       @id @default(autoincrement())
+  timetable_id Int?
+  day_id       Int?
+  date_at      DateTime? @db.DateTime(0)
+  desc         String?   @db.VarChar(255)
+  created_at   DateTime  @db.DateTime(0)
+  updated_at   DateTime  @db.DateTime(0)
+
+  @@index([day_id], map: "day_id")
+  @@index([timetable_id], map: "timetable_id")
+}
+
+model tbl_transaction_journals {
+  id                Int      @id @default(autoincrement())
+  financial_post_id Int?
+  student_class_id  Int?
+  operator_id       Int?
+  ref_no            String?  @db.VarChar(255)
+  desc              String?  @db.VarChar(255)
+  amount            Float?
+  created_at        DateTime @db.DateTime(0)
+  updated_at        DateTime @db.DateTime(0)
+
+  @@index([financial_post_id], map: "financial_post_id")
+  @@index([operator_id], map: "operator_id")
+  @@index([student_class_id], map: "student_class_id")
+}
+
+model tbl_user_access {
+  id         Int      @id @default(autoincrement())
+  user_id    Int?
+  student_id Int?
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+
+  @@index([student_id], map: "student_id")
+  @@index([user_id], map: "user_id")
+}
+
+model tbl_user_chats {
+  id        Int    @default(autoincrement())
+  user_id   Int?
+  with_id   Int?
+  unique_id String @db.Char(36)
+
+  @@id([id, unique_id])
+  @@index([user_id], map: "user_id")
+  @@index([with_id], map: "with_id")
+}
+
+model tbl_waste_collection {
+  id               Int       @id @default(autoincrement())
+  student_class_id Int?
+  day_id           Int?
+  collection_date  DateTime? @db.DateTime(0)
+  waste_type_id    Int?
+  weight           Float?
+  created_at       DateTime  @db.DateTime(0)
+  updated_at       DateTime  @db.DateTime(0)
+
+  @@index([day_id], map: "day_id")
+  @@index([student_class_id], map: "student_class_id")
+  @@index([waste_type_id], map: "waste_type_id")
+}
+
+model tokens {
+  id          Int      @id @default(autoincrement())
+  token       String?  @db.VarChar(255)
+  user_uuid   String   @db.Char(36)
+  type        String?  @db.VarChar(255)
+  blacklisted Boolean?
+  expires     DateTime @db.DateTime(0)
+  created_at  DateTime @db.DateTime(0)
+  updated_at  DateTime @db.DateTime(0)
 }
